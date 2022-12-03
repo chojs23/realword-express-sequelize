@@ -1,9 +1,8 @@
 const { Sequelize } = require("sequelize");
 
-// Option 1: Passing a connection URI
 const sequelize = new Sequelize("conduit", "root", "1234", {
   dialect: "mysql",
-  host: "localhost",
+  host: "127.0.0.1",
 });
 
 const checkConnection = async () => {
