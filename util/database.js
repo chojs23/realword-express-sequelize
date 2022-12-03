@@ -8,9 +8,9 @@ const sequelize = new Sequelize("conduit", "root", "1234", {
 const checkConnection = async () => {
   try {
     await sequelize.authenticate();
-    console.log("Connection has been established successfully.");
+    console.log(`DB Connected`.cyan.underline.bold);
   } catch (error) {
-    console.error("Unable to connect to the database:", error);
+    console.error("Unable to connect to the database:".red.bold, error);
   }
 };
 
