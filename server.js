@@ -3,10 +3,20 @@ const sequelize = require("./util/database");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
 const colors = require("colors");
+const { errorHandler } = require("./middlewares/errorHandler");
+
+dotenv.config({ path: "config.env" });
 
 const app = express();
 
-dotenv.config({ path: "config.env" });
+// Body parser
+app.use(express.json());
+
+// Route files
+const users = require("./routes/users");
+
+// Mount routers
+app.use("/users", users);
 
 const PORT = process.env.PORT || 8080;
 
@@ -17,6 +27,11 @@ if (process.env.NODE_ENV === "development") {
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
+
+app.use(errorHandler);
+
+const sync = async () => await sequelize.sync({ force: true });
+sync();
 
 const server = app.listen(
   PORT,
