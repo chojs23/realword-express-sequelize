@@ -5,6 +5,8 @@ const morgan = require("morgan");
 const colors = require("colors");
 const { errorHandler } = require("./middlewares/errorHandler");
 
+const User = require("./models/User");
+
 dotenv.config({ path: "config.env" });
 
 const app = express();
@@ -14,9 +16,11 @@ app.use(express.json());
 
 // Route files
 const users = require("./routes/users");
+const profiles = require("./routes/profiles");
 
 // Mount routers
 app.use(users);
+app.use(profiles);
 
 const PORT = process.env.PORT || 8080;
 
@@ -30,8 +34,27 @@ app.get("/", (req, res) => {
 
 app.use(errorHandler);
 
+// Relations
+User.belongsToMany(User, {
+  as: "followers",
+  through: "Followers",
+  timestamps: false,
+  // foreignKey: "followingId",
+});
+
 const sync = async () => await sequelize.sync({ force: true });
-sync();
+sync().then(() => {
+  User.create({
+    email: "test@test.com",
+    password: "123456",
+    username: "neo",
+  });
+  User.create({
+    email: "test2@test.com",
+    password: "123456",
+    username: "celeb_neo",
+  });
+});
 
 const server = app.listen(
   PORT,
