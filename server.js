@@ -16,7 +16,7 @@ app.use(express.json());
 const users = require("./routes/users");
 
 // Mount routers
-app.use("/users", users);
+app.use(users);
 
 const PORT = process.env.PORT || 8080;
 

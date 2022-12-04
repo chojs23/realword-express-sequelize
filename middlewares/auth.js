@@ -16,7 +16,8 @@ exports.protect = async (req, res, next) => {
   }
 
   try {
-    const decoded = verify(token);
+    const decoded = await verify(token);
+
     req.user = await User.findByPk(decoded.id);
     next();
   } catch (error) {

@@ -60,6 +60,18 @@ module.exports.loginUser = asyncHandler(async (req, res, next) => {
   res.status(200).json({ user });
 });
 
+module.exports.getCurrentUser = asyncHandler(async (req, res, next) => {
+  const user = await User.findByPk(req.user.id);
+
+  if (!user) {
+    return next(new ErrorResponse(`User not found`, 404));
+  }
+
+  user.dataValues.token = req.headers.authorization.split(" ")[1];
+
+  res.status(200).json({ user });
+});
+
 const fieldValidation = (field, next) => {
   if (!field) {
     return next(new ErrorResponse(`Missing fields`, 400));
