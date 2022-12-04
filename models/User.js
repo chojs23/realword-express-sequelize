@@ -1,4 +1,4 @@
-const { DataTypes } = require("sequelize");
+const { DataTypes, Model } = require("sequelize");
 const sequelize = require("../util/database");
 const bcrypt = require("bcryptjs");
 
@@ -10,34 +10,39 @@ const bcrypt = require("bcryptjs");
     "image": null
  */
 
-const User = sequelize.define("User", {
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-  },
-  // token: {
-  //   type: DataTypes.STRING,
-  //   allowNull: false,
-  // },
-  username: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
+const User = sequelize.define(
+  "User",
+  {
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
 
-  bio: {
-    type: DataTypes.TEXT,
-    allowNull: true,
+    username: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    bio: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    image: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   },
-  image: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-});
+  { timestamps: false }
+);
+
+Model.prototype.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 const DEFAULT_SALT_ROUNDS = 10;
 

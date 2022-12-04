@@ -12,9 +12,11 @@ module.exports.errorHandler = (err, req, res, next) => {
   console.log(err.message.red);
   console.log(err.stack.red);
 
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  const statusCode = err.statusCode ? err.statusCode : 500;
 
   res.status(statusCode).json({
-    message: err.message,
+    errors: {
+      body: [err.message],
+    },
   });
 };
