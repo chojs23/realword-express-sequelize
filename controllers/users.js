@@ -61,7 +61,8 @@ module.exports.loginUser = asyncHandler(async (req, res, next) => {
 });
 
 module.exports.getCurrentUser = asyncHandler(async (req, res, next) => {
-  const user = await User.findByPk(req.user.id);
+  const { loggedUser } = req;
+  const user = await User.findByPk(loggedUser.id);
 
   if (!user) {
     return next(new ErrorResponse(`User not found`, 404));

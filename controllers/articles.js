@@ -12,6 +12,11 @@ const {
   appendTagList,
 } = require("../util/helpers");
 
+const includeOptions = [
+  { model: Tag, as: "tagLists", attributes: ["name"] },
+  { model: User, as: "author", attributes: { exclude: ["email", "password"] } },
+];
+
 module.exports.getArticles = asyncHandler(async (req, res, next) => {
   const { tag, author, favorited, limit = 20, offset = 0 } = req.query;
   const { loggedUser } = req;
@@ -23,13 +28,15 @@ module.exports.getArticles = asyncHandler(async (req, res, next) => {
         as: "tagLists",
         attributes: ["name"],
         through: { attributes: [] }, // ? this will remove the rows from the join table
-        where: tag ? { name: tag } : {},
+        // where: tag ? { name: tag } : {},
+        ...(tag && { where: { name: tag } }),
       },
       {
         model: User,
         as: "author",
         attributes: { exclude: ["password", "email"] },
-        where: author ? { username: author } : {},
+        // where: author ? { username: author } : {},
+        ...(author && { where: { username: author } }),
       },
     ],
     limit: parseInt(limit),
@@ -50,14 +57,15 @@ module.exports.getArticles = asyncHandler(async (req, res, next) => {
   }
 
   for (let article of articles.rows) {
-    // const articleTags = await article.getTagLists();
-    const articleTags = article.tagLists;
+    const articleTags = await article.getTagLists();
+    // const articleTags = article.tagLists;
     appendTagList(articleTags, article);
     await appendFollowers(loggedUser, article);
     await appendFavorites(loggedUser, article);
 
     delete article.dataValues.Favorites;
   }
+
   res
     .status(200)
     .json({ articles: articles.rows, articlesCount: articles.count });
@@ -100,6 +108,32 @@ module.exports.createArticle = asyncHandler(async (req, res, next) => {
   await appendFavorites(loggedUser, article);
 
   res.status(201).json({ article });
+});
+
+module.exports.articlesFeed = asyncHandler(async (req, res, next) => {
+  const { loggedUser } = req;
+
+  const { limit = 3, offset = 0 } = req.query;
+  const authors = await loggedUser.getFollowing();
+
+  const articles = await Article.findAndCountAll({
+    include: includeOptions,
+    limit: parseInt(limit),
+    offset: offset * limit,
+    order: [["createdAt", "DESC"]],
+    where: { authorId: authors.map((author) => author.id) },
+    distinct: true,
+  });
+
+  for (const article of articles.rows) {
+    const articleTags = await article.getTagLists();
+
+    appendTagList(articleTags, article);
+    await appendFollowers(loggedUser, article);
+    await appendFavorites(loggedUser, article);
+  }
+
+  res.json({ articles: articles.rows, articlesCount: articles.count });
 });
 
 const fieldValidation = (field, next) => {
