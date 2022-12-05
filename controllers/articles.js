@@ -13,7 +13,12 @@ const {
 } = require("../util/helpers");
 
 const includeOptions = [
-  { model: Tag, as: "tagLists", attributes: ["name"] },
+  {
+    model: Tag,
+    as: "tagLists",
+    attributes: ["name"],
+    through: { attributes: [] },
+  },
   { model: User, as: "author", attributes: { exclude: ["email", "password"] } },
 ];
 
@@ -110,6 +115,25 @@ module.exports.createArticle = asyncHandler(async (req, res, next) => {
   res.status(201).json({ article });
 });
 
+module.exports.deleteArticle = asyncHandler(async (req, res, next) => {
+  const { slug } = req.params;
+  const { loggedUser } = req;
+
+  const article = await Article.findOne({
+    where: { slug: slug },
+    include: includeOptions,
+  });
+
+  if (!article) next(new ErrorResponse("Article not found", 404));
+
+  if (article.authorId !== loggedUser.id)
+    return next(new ErrorResponse("Unauthorized", 401));
+
+  await article.destroy();
+
+  res.status(200).json({ article });
+});
+
 module.exports.articlesFeed = asyncHandler(async (req, res, next) => {
   const { loggedUser } = req;
 
@@ -134,6 +158,67 @@ module.exports.articlesFeed = asyncHandler(async (req, res, next) => {
   }
 
   res.json({ articles: articles.rows, articlesCount: articles.count });
+});
+
+module.exports.getArticle = asyncHandler(async (req, res, next) => {
+  const { loggedUser } = req;
+  const { slug } = req.params;
+
+  const article = await Article.findOne({
+    where: { slug: slug },
+    include: includeOptions,
+  });
+
+  if (!article) return next(new ErrorResponse("Article not found", 404));
+
+  const articleTags = await article.getTagLists();
+  appendTagList(articleTags, article);
+  await appendFollowers(loggedUser, article);
+  await appendFavorites(loggedUser, article);
+
+  res.status(200).json({ article });
+});
+
+module.exports.addFavoriteArticle = asyncHandler(async (req, res, next) => {
+  const { loggedUser } = req;
+  const { slug } = req.params;
+
+  const article = await Article.findOne({
+    where: { slug: slug },
+    include: includeOptions,
+  });
+
+  if (!article) return next(new ErrorResponse("Article not found", 404));
+
+  await loggedUser.addFavorite(article);
+
+  const articleTags = await article.getTagLists();
+  appendTagList(articleTags, article);
+  await appendFollowers(loggedUser, article);
+  await appendFavorites(loggedUser, article);
+
+  res.status(200).json({ article });
+});
+
+module.exports.deleteFavoriteArticle = asyncHandler(async (req, res, next) => {
+  const { loggedUser } = req;
+  const { slug } = req.params;
+
+  const article = await Article.findOne({
+    where: { slug: slug },
+    include: includeOptions,
+  });
+
+  if (!article) return next(new ErrorResponse("Article not found", 404));
+
+  await loggedUser.removeFavorite(article);
+
+  const articleTags = await article.getTagLists();
+  appendTagList(articleTags, article);
+  await appendFollowers(loggedUser, article);
+  await appendFavorites(loggedUser, article);
+
+  res.status(200).json({ article });
 });
 
 const fieldValidation = (field, next) => {
