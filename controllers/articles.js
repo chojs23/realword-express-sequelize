@@ -134,6 +134,43 @@ module.exports.deleteArticle = asyncHandler(async (req, res, next) => {
   res.status(200).json({ article });
 });
 
+module.exports.updateArticle = asyncHandler(async (req, res, next) => {
+  const { slug } = req.params;
+  const { loggedUser } = req;
+
+  const article = await Article.findOne({
+    where: { slug: slug },
+    include: includeOptions,
+  });
+
+  if (!article) next(new ErrorResponse("Article not found", 404));
+
+  if (article.authorId !== loggedUser.id)
+    return next(new ErrorResponse("Unauthorized", 401));
+
+  const { title, description, body } = req.body.article;
+
+  const slugInDB = await Article.findOne({
+    where: { slug: slugify(title ? title : article.title, { lower: true }) },
+  });
+
+  if (slugInDB && slugInDB.slug !== slug)
+    return next(new ErrorResponse("Title already exists", 400));
+
+  await article.update({
+    title: title ? title : article.title,
+    description: description ? description : article.description,
+    body: body ? body : article.body,
+  });
+
+  const articleTags = await article.getTagLists();
+  appendTagList(articleTags, article);
+  await appendFollowers(loggedUser, article);
+  await appendFavorites(loggedUser, article);
+
+  res.status(200).json({ article });
+});
+
 module.exports.articlesFeed = asyncHandler(async (req, res, next) => {
   const { loggedUser } = req;
 

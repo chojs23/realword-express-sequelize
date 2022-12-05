@@ -8,6 +8,7 @@ const {
   addFavoriteArticle,
   deleteFavoriteArticle,
   deleteArticle,
+  updateArticle,
 } = require("../controllers/articles");
 const { protect } = require("../middlewares/auth");
 
@@ -18,6 +19,7 @@ router
 router
   .route("/articles/:slug")
   .get(protect, getArticle)
+  .put(protect, updateArticle)
   .delete(protect, deleteArticle);
 router
   .route("/articles/:slug/favorite")
