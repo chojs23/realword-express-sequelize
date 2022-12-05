@@ -43,28 +43,39 @@ app.use(errorHandler);
 User.belongsToMany(User, {
   as: "followers",
   through: "Followers",
+  foreignKey: "userId",
   timestamps: false,
-  // foreignKey: "followingId",
+});
+User.belongsToMany(User, {
+  as: "following",
+  through: "Followers",
+  foreignKey: "followerId",
+  timestamps: false,
 });
 
-User.hasMany(Article, { as: "author", foreignKey: "authorId" });
+User.hasMany(Article, {
+  foreignKey: "authorId",
+  onDelete: "CASCADE",
+});
 Article.belongsTo(User, { as: "author", foreignKey: "authorId" });
 
 User.belongsToMany(Article, {
-  as: "favorited",
+  as: "favorites",
   through: "Favorites",
   timestamps: false,
 });
 Article.belongsToMany(User, {
-  as: "favorited",
   through: "Favorites",
+  foreignKey: "articleId",
   timestamps: false,
 });
 
 Article.belongsToMany(Tag, {
-  through: "ArticleTags",
-  uniqueKey: false,
+  through: "TagLists",
+  as: "tagLists",
+  foreignKey: "articleId",
   timestamps: false,
+  onDelete: "CASCADE",
 });
 Tag.belongsToMany(Article, {
   through: "ArticleTags",

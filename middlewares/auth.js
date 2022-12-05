@@ -3,30 +3,28 @@ const User = require("../models/User");
 const ErrorResponse = require("../util/errorResponse");
 
 exports.protect = async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Token")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  }
-
-  if (!token) {
-    return next(new ErrorResponse("Not authorized to access this route", 401));
-  }
-
   try {
-    const decoded = await verify(token);
+    const { headers } = req;
+    if (!headers.authorization) return next();
 
-    const user = await User.findByPk(decoded.id);
-    if (!user) {
-      throw new Error();
-    }
+    const token = headers.authorization.split(" ")[1];
+    if (!token) throw new SyntaxError("Token missing or malformed");
 
-    req.user = user;
+    const userVerified = await verify(token);
+    if (!userVerified) throw new Error("Invalid Token");
+
+    req.loggedUser = await User.findOne({
+      attributes: { exclude: ["email", "password"] },
+      where: { email: userVerified.email },
+    });
+
+    if (!req.loggedUser) next(new NotFoundError("User"));
+
+    headers.email = userVerified.email;
+    req.loggedUser.dataValues.token = token;
+
     next();
   } catch (error) {
-    return next(new ErrorResponse("Not authorized to access this route", 401));
+    next(error);
   }
 };

@@ -4,7 +4,7 @@ const ErrorResponse = require("../util/errorResponse");
 
 module.exports.getProfile = asyncHandler(async (req, res, next) => {
   const username = req.params.username;
-
+  const { loggedUser } = req;
   const user = await User.findOne({ where: { username: username } });
 
   if (!user) {
@@ -13,9 +13,9 @@ module.exports.getProfile = asyncHandler(async (req, res, next) => {
 
   let isFollowing = false;
 
-  if (req.user) {
+  if (loggedUser) {
     const followers = await user.getFollowers();
-    isFollowing = followers.some((user) => user.id === req.user.id);
+    isFollowing = followers.some((user) => user.id === loggedUser.id);
   }
 
   const profile = {
@@ -29,14 +29,14 @@ module.exports.getProfile = asyncHandler(async (req, res, next) => {
 
 module.exports.followUser = asyncHandler(async (req, res, next) => {
   const username = req.params.username;
-
+  const { loggedUser } = req;
   const userToFollow = await User.findOne({ where: { username: username } });
 
   if (!userToFollow) {
     return next(new ErrorResponse(`User not found`, 404));
   }
 
-  const currentUser = await User.findByPk(req.user.id);
+  const currentUser = await User.findByPk(loggedUser.id);
 
   await userToFollow.addFollower(currentUser);
 
@@ -52,14 +52,14 @@ module.exports.followUser = asyncHandler(async (req, res, next) => {
 
 module.exports.unfollowUser = asyncHandler(async (req, res, next) => {
   const username = req.params.username;
-
+  const { loggedUser } = req;
   const userToUnfollow = await User.findOne({ where: { username: username } });
 
   if (!userToUnfollow) {
     return next(new ErrorResponse(`User not found`, 404));
   }
 
-  const currentUser = await User.findByPk(req.user.id);
+  const currentUser = await User.findByPk(loggedUser.id);
 
   await userToUnfollow.removeFollower(currentUser);
 
