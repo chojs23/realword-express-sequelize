@@ -16,7 +16,7 @@ const appendFavorites = async (loggedUser, article) => {
 
 const appendFollowers = async (loggedUser, toAppend) => {
   //
-  if (toAppend.author) {
+  if (toAppend?.author) {
     const author = await toAppend.getAuthor();
     const following = await author.hasFollower(loggedUser ? loggedUser : null);
     toAppend.author.dataValues.following = loggedUser ? following : false;

@@ -9,6 +9,7 @@ const { errorHandler } = require("./middlewares/errorHandler");
 const User = require("./models/User");
 const Article = require("./models/Article");
 const Tag = require("./models/Tag");
+const Comment = require("./models/Comment");
 
 dotenv.config({ path: "config.env" });
 
@@ -21,11 +22,15 @@ app.use(express.json());
 const users = require("./routes/users");
 const profiles = require("./routes/profiles");
 const articles = require("./routes/articles");
+const comments = require("./routes/comments");
+const tags = require("./routes/tags");
 
 // Mount routers
 app.use(users);
 app.use(profiles);
 app.use(articles);
+app.use(comments);
+app.use(tags);
 
 const PORT = process.env.PORT || 8080;
 
@@ -58,6 +63,18 @@ User.hasMany(Article, {
   onDelete: "CASCADE",
 });
 Article.belongsTo(User, { as: "author", foreignKey: "authorId" });
+
+User.hasMany(Comment, {
+  foreignKey: "authorId",
+  onDelete: "CASCADE",
+});
+Comment.belongsTo(User, { as: "author", foreignKey: "authorId" });
+
+Article.hasMany(Comment, {
+  foreignKey: "articleId",
+  onDelete: "CASCADE",
+});
+Comment.belongsTo(Article, { foreignKey: "articleId" });
 
 User.belongsToMany(Article, {
   as: "favorites",
