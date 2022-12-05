@@ -16,6 +16,7 @@ router
   .route("/articles")
   .get(protect, getArticles)
   .post(protect, createArticle);
+router.route("/articles/feed").get(protect, articlesFeed);
 router
   .route("/articles/:slug")
   .get(protect, getArticle)
@@ -25,6 +26,5 @@ router
   .route("/articles/:slug/favorite")
   .post(protect, addFavoriteArticle)
   .delete(protect, deleteFavoriteArticle);
-router.route("/articles/feed").get(protect, articlesFeed);
 
 module.exports = router;
