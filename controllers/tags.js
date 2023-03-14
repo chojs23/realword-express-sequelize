@@ -1,4 +1,4 @@
-const Tag = require("../models/tag");
+const Tag = require("../models/Tag");
 const { appendTagList } = require("../util/helpers");
 
 module.exports.getTags = async (req, res, next) => {
